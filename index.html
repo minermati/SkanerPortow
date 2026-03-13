@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recon-NG | Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --panel-bg: #0a0a0a;
+            --main-green: #00ff00;
+            --dark-green: #004400;
+            --glow: 0 0 10px #00ff00;
+            --text-color: #ccc;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--main-green);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* LEWY PANEL (NAVBAR) */
+        .sidebar {
+            width: 260px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--main-green);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 15px rgba(0, 255, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: var(--glow);
+            letter-spacing: 2px;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background-color: #000;
+            border: 1px solid var(--main-green);
+            color: var(--main-green);
+            padding: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            box-shadow: var(--glow);
+        }
+
+        /* PRZYCISKI */
+        button {
+            background-color: transparent;
+            color: var(--main-green);
+            border: 1px solid var(--dark-green);
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--main-green);
+            color: #000;
+            border-color: var(--main-green);
+            box-shadow: var(--glow);
+        }
+
+        button::before {
+            content: '>';
+            margin-right: 10px;
+            opacity: 0.5;
+        }
+        button:hover::before { opacity: 1; }
+
+        .btn-warning {
+            color: #ffaa00;
+            border-color: #aa5500;
+            margin-top: 15px;
+        }
+        .btn-warning:hover {
+            background-color: #ffaa00;
+            border-color: #ffaa00;
+        }
+
+        /* GŁÓWNY EKRAN */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .terminal-header {
+            border-bottom: 1px solid var(--dark-green);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .output-card {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--dark-green);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--main-green);
+            color: var(--text-color);
+        }
+
+        /* STYLE DLA TABEL I WYNIKÓW */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #222;
+        }
+
+        th {
+            color: var(--main-green);
+            border-bottom: 1px solid var(--dark-green);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: var(--dark-green);
+            color: var(--main-green);
+            border: 1px solid var(--main-green);
+            margin: 5px;
+            font-weight: bold;
+        }
+
+        .status-200 { color: #00ff00; font-weight: bold; }
+        .status-403 { color: #ffaa00; font-weight: bold; }
+        .status-301, .status-302 { color: #00aaff; font-weight: bold; }
+
+        .loading { animation: blink 1s infinite; }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="logo">RECON_SYS</div>
+
+        <div class="input-group">
+            <label for="domainTarget">Cel ataku (Domena):</label>
+            <input type="text" id="domainTarget" placeholder="np. scanme.nmap.org" value="scanme.nmap.org">
+        </div>
+
+        <button onclick="runModule('scan-ports')">Skaner Portów</button>
+        <button onclick="runModule('scan-subdomains')">Enumeracja Subdomen</button>
+        <button onclick="runModule('scan-directories')">Fuzzing Katalogów</button>
+        <button onclick="runModule('scan-tech')">Technologie (Stack)</button>
+        <button onclick="runModule('scan-dns')">Rekordy DNS</button>
+
+        <div style="margin-top: auto;">
+            <button onclick="exportReport()" class="btn-warning">[ Zapisz Raport .JSON ]</button>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="terminal-header">
+            <span id="statusLine">STATUS: Oczekiwanie na rozkazy...</span>
+            <span id="lastScanInfo" style="color: #888;"></span>
+        </div>
+        <div id="outputArea">
+            <div class="output-card">
+                <p style="color: var(--main-green);">> Witaj w panelu sterowania.</p>
+                <p>> Wpisz domenę po lewej stronie i wybierz moduł skanujący, aby rozpocząć akwizycję danych.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Zmienne globalne do przechowywania ostatnich wyników
+        let lastScanData = null;
+        let lastScanType = "";
+
+        // Funkcja do pobierania pliku
+        function exportReport() {
+            if (!lastScanData) {
+                alert("BŁĄD: Brak danych do eksportu. Wykonaj najpierw skan!");
+                return;
+            }
+
+            // Zamieniamy obiekt JS na ładnie sformatowany tekst JSON
+            const dataStr = JSON.stringify(lastScanData, null, 4);
+
+            // Tworzymy wirtualny plik (Blob) w pamięci przeglądarki
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+
+            // Tworzymy ukryty link, klikamy go i usuwamy
+            const a = document.createElement("a");
+            a.href = url;
+
+            // Generujemy nazwę pliku, np. recon_scan-ports_google.com.json
+            const target = lastScanData.target || lastScanData.domain || "unknown";
+            a.download = `recon_${lastScanType}_${target}.json`;
+
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Funkcja budująca HTML na podstawie typu skanu (została bez zmian)
+        function formatResults(endpoint, data) {
+            let html = '';
+
+            if (endpoint === 'scan-ports') {
+                html += `<h3 style="color: var(--main-green);">[+] Otwarte porty dla: ${data.target} (${data.ip})</h3>`;
+                if (data.open_ports.length === 0) {
+                    html += `<p>Brak otwartych portów z puli podstawowej.</p>`;
+                } else {
+                    data.open_ports.forEach(port => {
+                        html += `<div class="badge">PORT ${port} [OPEN]</div>`;
+                    });
+                }
+            }
+            else if (endpoint === 'scan-subdomains') {
+                html += `<h3 style="color: var(--main-green);">[+] Znalezione subdomeny (${data.count}):</h3>`;
+                html += `<table><tr><th>Lp.</th><th>Subdomena</th></tr>`;
+                data.subdomains.forEach((sub, index) => {
+                    html += `<tr><td>${index + 1}</td><td>${sub}</td></tr>`;
+                });
+                html += `</table>`;
+            }
+            else if (endpoint === 'scan-directories') {
+                html += `<h3 style="color: var(--main-green);">[+] Znalezione ścieżki:</h3>`;
+                if (data.found_directories.length === 0) {
+                    html += `<p>Nie znaleziono ukrytych katalogów.</p>`;
+                } else {
+                    html += `<table><tr><th>URL</th><th>Status HTTP</th></tr>`;
+                    data.found_directories.forEach(dir => {
+                        let statusClass = `status-${dir.status}`;
+                        html += `<tr>
+                                    <td><a href="${dir.url}" target="_blank" style="color: #aaa;">${dir.url}</a></td>
+                                    <td class="${statusClass}">${dir.status}</td>
+                                 </tr>`;
+                    });
+                    html += `</table>`;
+                }
+            }
+            else if (endpoint === 'scan-tech') {
+                html += `<h3 style="color: var(--main-green);">[+] Wykryte Technologie (Nagłówki):</h3>`;
+                html += `<table><tr><th>Klucz / Technologia</th><th>Wartość</th></tr>`;
+                for (const [key, value] of Object.entries(data.tech_stack)) {
+                    if (typeof value === 'object') {
+                        let subItems = Object.entries(value).map(([k, v]) => `${k}: ${v ? '<span style="color:#0f0">TAK</span>' : '<span style="color:#f00">NIE</span>'}`).join('<br>');
+                        html += `<tr><td><strong>${key}</strong></td><td>${subItems}</td></tr>`;
+                    } else {
+                        html += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
+                    }
+                }
+                html += `</table>`;
+            }
+            else if (endpoint === 'scan-dns') {
+                html += `<h3 style="color: var(--main-green);">[+] Rekordy DNS:</h3>`;
+                for (const [recordType, records] of Object.entries(data.dns_records)) {
+                    html += `<h4 style="margin-bottom: 5px; color: #fff;">${recordType}</h4>`;
+                    if (records.length === 0) {
+                        html += `<p style="margin-top: 0; color: #777;">Brak rekordów</p>`;
+                    } else {
+                        html += `<ul style="margin-top: 0; color: #aaa;">`;
+                        records.forEach(r => html += `<li>${r}</li>`);
+                        html += `</ul>`;
+                    }
+                }
+            }
+
+            return html;
+        }
+
+        // Główna funkcja wykonująca zapytania
+        async function runModule(endpoint) {
+            const domain = document.getElementById('domainTarget').value.trim();
+            const outputArea = document.getElementById('outputArea');
+            const statusLine = document.getElementById('statusLine');
+            const lastScanInfo = document.getElementById('lastScanInfo');
+
+            if (!domain) {
+                alert("BŁĄD: Podaj domenę docelową!");
+                return;
+            }
+
+            statusLine.innerHTML = `STATUS: Wykonywanie modułu [${endpoint}]... <span class="loading">_</span>`;
+            lastScanInfo.innerHTML = "";
+
+            outputArea.innerHTML = `
+                <div class="output-card">
+                    <p style="color: yellow;">> Nawiązywanie połączenia z celem: ${domain}</p>
+                    <p>> Akwizycja danych w toku. Proszę czekać...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`/${endpoint}/${domain}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Zapisujemy dane globalnie dla przycisku EKSPORT
+                lastScanData = data;
+                lastScanType = endpoint;
+
+                statusLine.innerHTML = `STATUS: Moduł [${endpoint}] zakończył pracę.`;
+                lastScanInfo.innerHTML = `Gotowe do eksportu.`;
+
+                outputArea.innerHTML = `
+                    <div class="output-card">
+                        ${formatResults(endpoint, data)}
+                    </div>
+                `;
+
+            } catch (error) {
+                statusLine.innerHTML = `<span style="color: red;">STATUS: BŁĄD KRYTYCZNY</span>`;
+                outputArea.innerHTML = `
+                    <div class="output-card" style="border-left-color: red;">
+                        <p style="color: red;">[!] Wyjątek podczas wykonywania: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
