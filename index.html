@@ -188,9 +188,13 @@
         <button onclick="runModule('scan-tech')">Technologie (Stack)</button>
         <button onclick="runModule('scan-dns')">Rekordy DNS</button>
 
-        <div style="margin-top: auto;">
-            <button onclick="exportReport()" class="btn-warning">[ Zapisz Raport .JSON ]</button>
+        <div style="margin-top: auto; text-align: center;">
+            <button onclick="exportReport()" class="btn-warning" style="width: 100%;">[ Zapisz Raport .JSON ]</button>
+            <a href="#" onclick="showDisclaimer(); return false;" style="color: #666; font-size: 11px; text-decoration: none; display: block; margin-top: 15px; font-family: 'Courier New', Courier, monospace;">
+                [ Terms of Use ]
+            </a>
         </div>
+    </nav>
     </nav>
 
     <main class="main-content">
@@ -358,6 +362,15 @@
                     </div>
                 `;
             }
+        }
+        function showDisclaimer() {
+            alert(
+                "=== ZASTRZEŻENIE (TERMS OF USE) ===\n\n" +
+                "Narzędzie zostało stworzone wyłącznie w celach edukacyjnych, informacyjnych i demonstracyjnych.\n\n" +
+                "Autor nie ponosi żadnej odpowiedzialności za ewentualne szkody wynikające z użycia, " +
+                "niemożności użycia lub niewłaściwego użycia tego oprogramowania. \n\n" +
+                "Pamiętaj: Skanuj wyłącznie domeny i sieci, do których masz wyraźne uprawnienia!"
+            );
         }
     </script>
 </body>
