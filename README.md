@@ -28,5 +28,7 @@ Projekt został zbudowany w architekturze **Client-Server** z podziałem na wars
 * **HTML5 & CSS3** - Nowoczesny układ oparty na CSS Grid i Flexbox.
 * **Vanilla JavaScript** - Czysty JS bez ciężkich frameworków (React/Vue), co gwarantuje natychmiastowe ładowanie strony. Zastosowano nowoczesną składnię `async/await`.
 
+Ten program powstał w celach badawczych i edukacyjnych. Używaj go wyłącznie w sieciach, którymi zarządzasz, do których masz uprawnienia, lub za wyraźną zgodą ich właściciela. Autor nie ponosi odpowiedzialności za nielegalne lub nieetyczne wykorzystanie tego narzędzia.
+
 https://skanerportow.onrender.com
    
