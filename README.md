@@ -19,7 +19,7 @@ Aplikacja pozwala na szybkie diagnozowanie otwartych portów na zdalnych serwera
 Projekt został zbudowany w architekturze **Client-Server** z podziałem na warstwy:
 
 **Backend (Logika i Sieć):**
-* **Python 3.8+**
+* **Python 3.13+**
 * **FastAPI** - framework do budowy API, wybrany ze względu na natywne wsparcie dla asynchroniczności i ogromną szybkość.
 * **Uvicorn** - lekki i błyskawiczny serwer ASGI.
 * Wbudowane biblioteki `socket` oraz `asyncio` do niskopoziomowej komunikacji sieciowej TCP.
